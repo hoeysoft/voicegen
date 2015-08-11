@@ -12,48 +12,71 @@
 
 
 NSString* ToFileName(NSString *sentence, NSCharacterSet *charactersToReplace) {
-    return [[sentence componentsSeparatedByCharactersInSet:charactersToReplace] componentsJoinedByString:@"_"];
+    NSString *filename = [[sentence componentsSeparatedByCharactersInSet:charactersToReplace] componentsJoinedByString:@"_"];
+    
+    if ([filename length] > 100)
+        return [filename substringToIndex:100];
+    else
+        return filename;
 }
 
 NSURL* ToUrl(NSString *filename) {
     return [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@.aiff", filename]];
 }
 
+
+@interface FinishWaiter : NSObject<NSSpeechSynthesizerDelegate>
+@property BOOL finished;
+@end
+
+@implementation FinishWaiter
+- (id)init {
+    if (self = [super init]) {
+        _finished = NO;
+    }
+    return self;
+}
+
+- (void)speechSynthesizer:(NSSpeechSynthesizer *)sender
+        didFinishSpeaking:(BOOL)success
+{
+    _finished = YES;
+}
+@end
+
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-        NSFileHandle *input = [NSFileHandle fileHandleWithStandardInput];
-        
         NSSpeechSynthesizer *synth = [[NSSpeechSynthesizer alloc] init];
-        [synth setVoice:@"com.apple.speech.synthesis.voice.daniel"];
+        [synth setVoice:@"com.apple.speech.synthesis.voice.Alex"];
         
         NSCharacterSet *charactersToReplace = [[NSCharacterSet alphanumericCharacterSet] invertedSet];
         NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
         
+        char buffer[1024];
         while (TRUE) {
-            NSData* data = [input availableData];
+            printf("vg:");
+            fgets(buffer, 1024, stdin);
             
-            if(data == nil) continue;
-            
-            NSString *line = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            NSString *line = [NSString stringWithUTF8String:buffer];
             NSString *sentence = [line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
             if ([sentence length] == 0) continue;
             
             NSString *filename = ToFileName(sentence, charactersToReplace);
-            
-            [synth startSpeakingString:sentence toURL:ToUrl(filename)];
-            
-            while ([synth isSpeaking]) {
-                [NSThread sleepForTimeInterval:0.1f];
-            }
-            [synth stopSpeaking];
         
-            system([[NSString stringWithFormat:@"ffmpeg -loglevel quiet -i %@.aiff %@.mp3", filename, filename] UTF8String]);
-            system([[NSString stringWithFormat:@"rm %@.aiff", filename] UTF8String]);
-            system([[NSString stringWithFormat:@"afplay %@.mp3", filename] UTF8String]);
-            
             [pasteboard clearContents];
             NSArray *pbdata = @[[NSString stringWithFormat:@"[sound:%@.mp3]", filename]];
             [pasteboard writeObjects:pbdata];
+
+            FinishWaiter *waiter = [[FinishWaiter alloc] init];
+            [synth setDelegate:waiter];
+            [synth startSpeakingString:sentence toURL:ToUrl(filename)];
+            
+            // Wait until finished.
+            while (![waiter finished] && [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:1]]);
+            
+            system([[NSString stringWithFormat:@"ffmpeg -loglevel quiet -i %@.aiff %@.mp3", filename, filename] UTF8String]);
+            system([[NSString stringWithFormat:@"rm %@.aiff", filename] UTF8String]);
+            system([[NSString stringWithFormat:@"afplay %@.mp3", filename] UTF8String]);
         }
     }
     return 0;
