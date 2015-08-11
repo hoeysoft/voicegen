@@ -10,6 +10,12 @@
 
 @import AppKit;
 
+NSString* GetVoiceType() {
+    if (rand() % 2 == 0)
+        return @"com.apple.speech.synthesis.voice.Alex";
+    else
+        return @"com.apple.speech.synthesis.voice.daniel";
+}
 
 NSString* ToFileName(NSString *sentence, NSCharacterSet *charactersToReplace) {
     NSString *filename = [[sentence componentsSeparatedByCharactersInSet:charactersToReplace] componentsJoinedByString:@"_"];
@@ -45,10 +51,9 @@ NSURL* ToUrl(NSString *filename) {
 @end
 
 int main(int argc, const char * argv[]) {
+    srand((unsigned int)time(NULL));
     @autoreleasepool {
         NSSpeechSynthesizer *synth = [[NSSpeechSynthesizer alloc] init];
-        [synth setVoice:@"com.apple.speech.synthesis.voice.daniel"];
-        
         NSCharacterSet *charactersToReplace = [[NSCharacterSet alphanumericCharacterSet] invertedSet];
         NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
         
@@ -61,6 +66,7 @@ int main(int argc, const char * argv[]) {
             NSString *sentence = [line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
             if ([sentence length] == 0) continue;
             
+            [synth setVoice:GetVoiceType()];
             NSString *filename = ToFileName(sentence, charactersToReplace);
         
             [pasteboard clearContents];
