@@ -235,6 +235,7 @@
 				DA93C1051B7A2A26006E703A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
