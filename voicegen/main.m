@@ -47,7 +47,7 @@ NSURL* ToUrl(NSString *filename) {
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
         NSSpeechSynthesizer *synth = [[NSSpeechSynthesizer alloc] init];
-        [synth setVoice:@"com.apple.speech.synthesis.voice.Victoria"];
+        [synth setVoice:@"com.apple.speech.synthesis.voice.daniel"];
         
         NSCharacterSet *charactersToReplace = [[NSCharacterSet alphanumericCharacterSet] invertedSet];
         NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
