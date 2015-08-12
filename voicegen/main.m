@@ -70,7 +70,7 @@ int main(int argc, const char * argv[]) {
             NSString *filename = ToFileName(sentence, charactersToReplace);
         
             [pasteboard clearContents];
-            NSArray *pbdata = @[[NSString stringWithFormat:@"[sound:%@.mp3]", filename]];
+            NSArray *pbdata = @[[NSString stringWithFormat:@"%@\n[sound:%@.mp3]", sentence, filename]];
             [pasteboard writeObjects:pbdata];
 
             FinishWaiter *waiter = [[FinishWaiter alloc] init];
